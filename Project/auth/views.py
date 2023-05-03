@@ -72,6 +72,9 @@ def login():
     if form.validate_on_submit():
         # login with username OR email
         user = User.query.filter(or_(User.email == form.email.data, User.username == form.email.data)).first()
+        if user is None:
+            flash("Username not available", "success")
+            return render_template('login.html', form=form)
         if user is not None and user.check_password(form.password.data):
             login_user(user)
             next_route = request.args.get("next")
@@ -80,7 +83,7 @@ def login():
                                   identity=Identity(user.id))
             flash("Successfully Logged In", "success")
             return redirect(next_route or url_for('auth.home'))
-        flash('Invalid login details.', "danger")
+        flash('Invalid Password', "danger")
     return render_template('login.html', form=form)
 
 
