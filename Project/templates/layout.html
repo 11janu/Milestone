@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+    {% block head %}
+    {% include "bootstrap.html" %}
+    <title>{% block title %}{% endblock %} - My calc</title>
+    {% endblock %}
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">MyCalc</a>
+        <button aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"
+                class="navbar-toggler"
+                data-bs-target="#navbarSupportedContent" data-bs-toggle="collapse" type="button">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.home') }}">Home</a></li>
+                {% if current_user.is_anonymous %}
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.login') }}">Login</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.register') }}">Register</a></li>
+                {% else %}
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('game.index') }}">Game</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.profile') }}">Profile</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('shop.index') }}">Shop</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('shop.view_cart') }}">My Cart</a></li>
+                {% if current_user.has_role("Admin") %}
+                <li class="nav-item dropdown">
+                    <a aria-expanded="false" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#"
+                       id="navbarDropdown" role="button">
+                        Admin
+                    </a>
+                    <ul aria-labelledby="navbarDropdown" class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ url_for('admin.create_role') }}">Create Role</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('admin.list_roles') }}">List Roles</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('admin.assign_roles') }}">Assign Roles</a></li>
+                    </ul>
+                </li>
+                {% endif %}
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a></li>
+                {% endif %}
+            </ul>
+            {% if current_user.account %}
+            <span class="navbar-text">
+                Balance: {{current_user.account.balance or 0}}
+            </span>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+<iframe id="flashes" src="{{url_for('flash.get_messages')}}"></iframe>
+<div class="container-fluid" id="content">{% block content %}{% endblock %}</div>
+<div id="footer">
+    {% block footer %}
+    &copy; Copyright 2022.
+    {% endblock %}
+</div>
+<script>
+    function flash(message, category="info"){
+        fetch("{{url_for('flash.add_message')}}",
+        {
+            method:"POST",
+            headers:{
+                "Content-Type":"application/x-www-form-urlencoded"
+            },
+            body: `message=${message}&category=${category}`
+        }).then(resp=>{
+           let ele= document.getElementById("flashes");
+           console.log(ele.contentWindow)
+           ele.contentWindow.location.reload();
+        });
+    }
+</script>
+</body>
+</html>
