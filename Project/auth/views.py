@@ -8,7 +8,6 @@ from werkzeug.utils import redirect
 
 from .forms import RegistrationForm, LoginForm, ProfileForm
 from .models import User, db
-from accounts.models import Account, Transactions
 from helpers import handle_duplicate_column
 
 auth = Blueprint('auth', __name__, template_folder='templates')
@@ -44,6 +43,13 @@ def test_admin():
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():
+        if User.query.filter_by(username=form.username.data).first():
+            flash("username is already registered", "error")
+            return render_template('registration.html', form=form)
+
+        if User.query.filter_by(email=form.email.data).first():
+            flash("Email is already registered", "error")
+            return render_template('registration.html', form=form)
 
         user = User(username=form.username.data, email=form.email.data)
         user.set_password(form.password1.data)
@@ -72,18 +78,7 @@ def login():
             # Tell Flask-Principal the identity changed
             identity_changed.send(current_app._get_current_object(),
                                   identity=Identity(user.id))
-            print(user.account)
-            if user.account is None:
-                a = Account(user_id=user.id)
-                db.session.add(a)
-                try:
-                    db.session.commit()
-                    flash("Account Created", "success")
-                except SQLAlchemyError as e:
-                    print(e)
-                    flash("Error creating account", "danger")
-                if Transactions.do_transfer(10, "welcome-bonus", -1, a.id, details="Welcome bonus!"):
-                    flash("Here's a welcome bonus of 10 points!","success")
+            flash("Successfully Logged In", "success")
             return redirect(next_route or url_for('auth.home'))
         flash('Invalid login details.', "danger")
     return render_template('login.html', form=form)
@@ -99,7 +94,7 @@ def logout():
 
     # Tell Flask-Principal the user is anonymous
     identity_changed.send(current_app._get_current_object(), identity=AnonymousIdentity())
-
+    flash("Logged out", "success")
     return redirect(url_for('auth.home'))
 
 
@@ -114,10 +109,19 @@ def protected():
 def profile():
     form = ProfileForm(obj=current_user)
     if form.validate_on_submit():
+        
+        if User.query.filter_by(username=form.username.data).first():
+            flash("username is already registered", "error")
+            return render_template('profile.html', form=form)
+
+        if User.query.filter_by(email=form.email.data).first():
+            flash("Email is already registered", "error")
+            return render_template('profile.html', form=form)
+
         cpw = form.current_password.data
         pw = form.password1.data
         updating_password = False
-        if len(pw) > 0 and len(cpw) > 0 and current_user.verify_password(cpw):
+        if len(pw) > 0 and len(cpw) > 0 and current_user.check_password(cpw):
             current_user.set_password(pw)
             updating_password = True
         current_user.email = form.email.data
@@ -128,6 +132,9 @@ def profile():
             flash("Saved Profile", "success")
             if updating_password:
                 flash("Password Changed", "success")
+            else:
+                flash("Password invalid", "error")
+            
         except SQLAlchemyError as e:
             print(e)
             handle_duplicate_column(str(e.orig))

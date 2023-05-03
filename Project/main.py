@@ -12,8 +12,6 @@ from sqlalchemy import MetaData
 
 # added so modules can be found between the two different lookup states:
 # from tests and from regular running of the app
-from sqlalchemy.exc import SQLAlchemyError
-
 CURR_DIR = os.path.dirname(os.path.abspath(__file__))
 print(CURR_DIR)
 sys.path.append(CURR_DIR)
@@ -26,7 +24,7 @@ def create_app(config_filename=''):
     app = Flask(__name__)
     # add db connection
     # default to sqlite if DB_URL isn't setup properly
-    db_url = "sqlite:///mydb.db" # os.environ.get("DB_URL", "sqlite:///mydb.db")
+    db_url = os.environ.get("DB_URL", "sqlite:///mydb.db")
     if db_url:
         app.config["SQLALCHEMY_DATABASE_URI"] = db_url
         app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -43,43 +41,6 @@ def create_app(config_filename=''):
     register_extensions(app)
 
     setup_db(app)
-    @app.before_first_request
-    def preload_data():
-        from accounts.models import Account
-        from base_model import db
-        # create system account if not exists
-        if Account.query.get(-1) is None:
-            system_account = Account(id=-1, user_id=None)
-            db.session.add(system_account)
-            try:
-                db.session.commit()
-                print("System account created")
-            except SQLAlchemyError as e:
-                db.session.rollback()
-                print(e)
-        # preload item data
-        import csv
-        from shop.models import Item
-        with open("initial_items.csv") as csv_file:
-            csv_reader = csv.DictReader(csv_file, delimiter=";")
-            for row in csv_reader:
-                # name;description;cost;stock;image
-                # I use negative ids so they don't collide with the auto increment ids
-                item = Item(id=row["id"].strip(),
-                            name=row["name"].strip(),
-                            description=row["description"].strip(),
-                            cost=row["cost"].strip(),
-                            stock=row["stock"].strip())
-                # set an image if available, otherwise rely on model's default
-                if row["image"]:
-                    item.image = row["image"].strip()
-                db.session.add(item)
-                try:
-                    db.session.commit()
-                except SQLAlchemyError as e:
-                    db.session.rollback()
-                    pass # can likely ignore is it'll mostly be duplicate constraint violations
-
     return app
 
 
@@ -101,7 +62,6 @@ def setup_db(app):
 
 
 def register_blueprints(app):
-    from accounts.models import Account
     from auth.models import User
 
     @login_manager.user_loader
@@ -134,20 +94,12 @@ def register_blueprints(app):
     app.register_blueprint(auth)
     from admin.views import admin
     app.register_blueprint(admin)
-    from game.views import game
-    app.register_blueprint(game)
-    from shop.views import shop
-    app.register_blueprint(shop)
-
-    from views.views import clientflash
-    app.register_blueprint(clientflash)
-
 
 
 if __name__ == "__main__":
     app = create_app()
 
-    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 8081)))
+    app.run(debug=True)
     from auth.models import db
     metadata = MetaData()
     metadata.reflect(bind=db.engine)
