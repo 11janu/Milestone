@@ -6,9 +6,7 @@ name: Deploy to heroku.
 on:
   push:
     branches:
-      - Milestone1
-      - Flask-Calc-History-Continued
-      - Flask-Calc-History-Heroku
+      - prod
 
 # Your workflows jobs.
 jobs:
