@@ -44,7 +44,7 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         if User.query.filter_by(username=form.username.data).first():
-            flash("username is already registered", "error")
+            flash("username is taken", "error")
             return render_template('registration.html', form=form)
 
         if User.query.filter_by(email=form.email.data).first():
@@ -73,7 +73,7 @@ def login():
         # login with username OR email
         user = User.query.filter(or_(User.email == form.email.data, User.username == form.email.data)).first()
         if user is None:
-            flash("Username not available", "success")
+            flash("Username not available", "danger")
             return render_template('login.html', form=form)
         if user is not None and user.check_password(form.password.data):
             login_user(user)
@@ -97,7 +97,7 @@ def logout():
 
     # Tell Flask-Principal the user is anonymous
     identity_changed.send(current_app._get_current_object(), identity=AnonymousIdentity())
-    flash("Logged out", "success")
+    flash("Successfully Logged out", "success")
     return redirect(url_for('auth.home'))
 
 
@@ -114,7 +114,7 @@ def profile():
     if form.validate_on_submit():
         
         if User.query.filter_by(username=form.username.data).first():
-            flash("username is already registered", "error")
+            flash("username is taken", "error")
             return render_template('profile.html', form=form)
 
         if User.query.filter_by(email=form.email.data).first():
