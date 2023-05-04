@@ -1,5 +1,5 @@
 CREATE TABLE
-    IS601_S_Accounts(
+    IF NOT EXISTS IS601_S_Accounts(
         id int auto_increment PRIMARY KEY,
         user_id VARCHAR(20) unique,
         balance VARCHAR(40),
