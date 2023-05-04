@@ -135,8 +135,8 @@ class DB:
             # data = re.findall("mysql:\/\/(\w+):(\w+)@([\w\.]+):([\d]+)\/([\w]+)", db_url)
             try:
                 # user, password, host, port, database = data
-                DB.db = mysql.connector.connect(host="us-cdbr-east-06.cleardb.net", user="be2020c131c0cd",
-                                                password="7ddd22e2", database="heroku_7357a1cd6d2bd80",
+                DB.db = mysql.connector.connect(host="us-cdbr-east-06.cleardb.net", user="b0228befb781e3",
+                                                password="b0cf8efa", database="heroku_6fc364ae04eea22",
                                                 port=int(3306),
                                                 connection_timeout=10)
                 DB.db.autocommit = True
